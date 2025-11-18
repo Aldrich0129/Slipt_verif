@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-PDF Payslip Validator - GUI版本
-验证拆分后的PDF工资单文件名与内容是否匹配
+Validador de Nóminas PDF - Versión GUI
+Valida que los nombres de archivo de las nóminas PDF divididas coincidan con su contenido
 
-功能：
-1. 导入包含拆分PDF的文件夹
-2. 验证文件名与PDF内容的匹配度
-3. 生成带颜色标记的Excel报告
+Funcionalidades:
+1. Importar carpeta que contiene PDFs divididos
+2. Validar la coincidencia entre nombre de archivo y contenido del PDF
+3. Generar reporte Excel con marcas de color
 """
 
 import os
@@ -22,7 +22,7 @@ from validator_core import validate_folder, generate_excel_report
 class PDFValidatorApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("PDF工资单验证工具")
+        self.root.title("Herramienta de Validación de Nóminas PDF")
         self.root.geometry("600x400")
         self.root.resizable(False, False)
 
@@ -39,7 +39,7 @@ class PDFValidatorApp:
 
         title_label = tk.Label(
             title_frame,
-            text="PDF工资单验证工具",
+            text="Herramienta de Validación de Nóminas PDF",
             font=("Arial", 18, "bold"),
             bg="#4472C4",
             fg="white"
@@ -50,15 +50,16 @@ class PDFValidatorApp:
         main_frame = tk.Frame(self.root, padx=30, pady=30)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # 说明文字
+        # Texto de descripción
         info_text = (
-            "此工具用于验证拆分后的PDF工资单文件名与内容是否匹配\n\n"
-            "验证内容：\n"
-            "• 文件名中的编号与PDF中的编号是否一致\n"
-            "• 文件名中的姓名与PDF中的姓名是否一致\n\n"
-            "将生成带颜色标记的Excel报告：\n"
-            "• 绿色 = 匹配 ✓\n"
-            "• 红色 = 不匹配 ✗"
+            "Esta herramienta valida que los nombres de archivo de las nóminas PDF\n"
+            "divididas coincidan con su contenido\n\n"
+            "Contenido de validación：\n"
+            "• El código del archivo coincide con el código del PDF\n"
+            "• El nombre del archivo coincide con el nombre del PDF\n\n"
+            "Se generará un reporte Excel con marcas de color：\n"
+            "• Verde = Coincide ✓\n"
+            "• Rojo = No coincide ✗"
         )
 
         info_label = tk.Label(
@@ -70,10 +71,10 @@ class PDFValidatorApp:
         )
         info_label.pack(pady=(0, 20))
 
-        # 选择文件夹按钮
+        # Botón de selección de carpeta
         select_btn = tk.Button(
             main_frame,
-            text="选择PDF文件夹",
+            text="Seleccionar carpeta de PDFs",
             command=self.select_folder,
             font=("Arial", 12, "bold"),
             bg="#4472C4",
@@ -111,76 +112,76 @@ class PDFValidatorApp:
         self.status_label.pack(pady=10)
 
     def select_folder(self):
-        folder = filedialog.askdirectory(title="选择包含PDF文件的文件夹")
+        folder = filedialog.askdirectory(title="Seleccionar carpeta que contiene archivos PDF")
         if folder:
             self.folder_path = folder
             self.validate_pdfs()
 
     def update_progress(self, current, total, filename):
-        """更新进度显示"""
+        """Actualizar visualización de progreso"""
         self.progress_bar['maximum'] = total
         self.progress_bar['value'] = current
-        self.progress_label.config(text=f"正在验证: {current}/{total} - {filename}")
+        self.progress_label.config(text=f"Validando: {current}/{total} - {filename}")
         self.root.update_idletasks()
 
     def validate_pdfs(self):
         if not self.folder_path:
             return
 
-        # 重置显示
+        # Reiniciar visualización
         self.progress_bar['value'] = 0
-        self.status_label.config(text="正在验证中...", fg="#007ACC")
+        self.status_label.config(text="Validando...", fg="#007ACC")
         self.root.update_idletasks()
 
         try:
-            # 执行验证
+            # Ejecutar validación
             self.results = validate_folder(self.folder_path, self.update_progress)
 
             if not self.results:
-                messagebox.showwarning("警告", "未找到PDF文件！")
-                self.status_label.config(text="未找到PDF文件", fg="#FF0000")
+                messagebox.showwarning("Advertencia", "¡No se encontraron archivos PDF!")
+                self.status_label.config(text="No se encontraron archivos PDF", fg="#FF0000")
                 return
 
-            # 生成Excel报告
+            # Generar reporte Excel
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             report_path = os.path.join(
                 self.folder_path,
-                f"验证报告_{timestamp}.xlsx"
+                f"Reporte_Validacion_{timestamp}.xlsx"
             )
 
             generate_excel_report(self.results, report_path)
 
-            # 显示结果
+            # Mostrar resultados
             total = len(self.results)
             matched = sum(1 for r in self.results if r['overall_match'])
             unmatched = total - matched
 
             result_msg = (
-                f"验证完成！\n\n"
-                f"总文件数: {total}\n"
-                f"匹配: {matched}\n"
-                f"不匹配: {unmatched}\n"
-                f"匹配率: {matched/total*100:.1f}%\n\n"
-                f"报告已保存至:\n{report_path}"
+                f"¡Validación completada!\n\n"
+                f"Total de archivos: {total}\n"
+                f"Coinciden: {matched}\n"
+                f"No coinciden: {unmatched}\n"
+                f"Tasa de coincidencia: {matched/total*100:.1f}%\n\n"
+                f"Reporte guardado en:\n{report_path}"
             )
 
-            messagebox.showinfo("验证完成", result_msg)
+            messagebox.showinfo("Validación completada", result_msg)
             self.status_label.config(
-                text=f"验证完成 - {matched}/{total} 匹配",
+                text=f"Validación completada - {matched}/{total} coinciden",
                 fg="#00AA00" if matched == total else "#FF6600"
             )
 
-            # 询问是否打开报告
-            if messagebox.askyesno("打开报告", "是否打开Excel报告？"):
+            # Preguntar si abrir el reporte
+            if messagebox.askyesno("Abrir reporte", "¿Desea abrir el reporte Excel?"):
                 os.system(f'xdg-open "{report_path}"' if os.name != 'nt' else f'start excel "{report_path}"')
 
         except Exception as e:
-            messagebox.showerror("错误", f"验证过程出错:\n{str(e)}")
-            self.status_label.config(text="验证失败", fg="#FF0000")
+            messagebox.showerror("Error", f"Error durante la validación:\n{str(e)}")
+            self.status_label.config(text="Validación fallida", fg="#FF0000")
 
 
 def main():
-    """主函数"""
+    """Función principal"""
     root = tk.Tk()
     app = PDFValidatorApp(root)
     root.mainloop()
